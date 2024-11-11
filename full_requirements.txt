@@ -130,7 +130,6 @@ tinycss2==1.2.1
 tornado==6.4.1
 traitlets==5.14.3
 types-python-dateutil==2.9.0.20241003
-typing==3.7.4.3
 typing_extensions==4.11.0
 tzdata==2023.3
 unicodedata2==15.1.0
