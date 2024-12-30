@@ -1,0 +1,7 @@
+feature,test_type,p_val,reject_null
+median_hr,kruskal,0.0,True
+mean_hr,kruskal,0.0,True
+std_hr,kruskal,0.0,True
+min_hr,kruskal,0.0,True
+max_hr,kruskal,0.0061,True
+age,kruskal,0.0,True
