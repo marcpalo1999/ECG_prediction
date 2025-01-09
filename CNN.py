@@ -371,8 +371,8 @@ def main(data_dict, labels_dict, config, load_model_path=None):
         
         # Model evaluation
         model.eval()
-        trainer = ModelTrainer(model, criterion, optimizer, device, 
-                             model_save_path=os.path.join(output_dir, 'best_model.pth'))
+        # trainer = ModelTrainer(model, criterion, optimizer, device, 
+        #                      model_save_path=os.path.join(output_dir, 'best_model.pth'))
         test_loss, test_preds, test_true, test_probs = trainer.evaluate(test_loader)
         
         # Calculate and save metrics
