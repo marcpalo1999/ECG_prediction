@@ -220,7 +220,7 @@ def load_single_patient(patient_dir):
         return None
 
 @timing_decorator
-def load_processed_data(base_dir, n_jobs=None):
+def load_processed_data(base_dir, indices = None, n_jobs=None):
     """
     Load processed ECG data from the most recent processing run.
     
@@ -232,7 +232,7 @@ def load_processed_data(base_dir, n_jobs=None):
         tuple: (ecg_data dict, patient_metadata DataFrame)
     """
     # Get number of CPUs to use
-    n_cpus = n_jobs if n_jobs is not None else cpu_count()-2
+    n_cpus = n_jobs if n_jobs is not None else cpu_count()-1
     print(f"Using {n_cpus} CPUs for parallel processing")
     
     data_dir = Path(base_dir)
@@ -251,9 +251,18 @@ def load_processed_data(base_dir, n_jobs=None):
         raise FileNotFoundError(f"Metadata file not found in {latest_dir}")
     
     patient_df = pd.read_csv(metadata_file, index_col=0)
+
+    try:
+        patient_df = patient_df[patient_df.index.isin(indices)]
+    except:
+        pass
     
     # Get list of patient directories
-    patient_dirs = [d for d in latest_dir.glob("*") if d.is_dir()]
+    if indices is None:
+        patient_dirs = [d for d in latest_dir.glob("*") if d.is_dir()]
+    else:
+        patient_dirs = [d for d in latest_dir.glob("*") if (d.is_dir()) and (d.name in indices) ]
+
     total_patients = len(patient_dirs)
     
     # Parallel loading with progress bar
@@ -278,7 +287,7 @@ def load_processed_data(base_dir, n_jobs=None):
 def main():
     # Define paths
     dataset_dir = '../a-large-scale-12-lead-electrocardiogram-database-for-arrhythmia-study-1.0.0/WFDBRecords'
-    output_dir = './processed_ecg_data'
+    output_dir = './Results'
     
     # Initialize processor
     processor = ECGProcessor(dataset_dir, output_dir)
