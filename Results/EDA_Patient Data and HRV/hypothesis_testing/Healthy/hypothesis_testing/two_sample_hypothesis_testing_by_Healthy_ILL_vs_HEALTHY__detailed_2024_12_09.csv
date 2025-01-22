@@ -1,7 +1,0 @@
-feature,group_1,group_2,group_1_mean,group_2_mean,group_1_std,group_2_std,group_1_median,group_2_median,group_1_iqr,group_2_iqr,shapiro_p_val_group_1,shapiro_p_val_group_2,group_1_is_normal,group_2_is_normal,t_test_p_val,sample_means_are_same,mann_whitney_p_val,sample_distributions_are_same,effect_size,int_cohen_d,statistically_sig_different
-median_hr,ILL,HEALTHY,78.02,75.879,29.89,10.466,58.939,74.352,48.098,15.687,0.0,0.0,False,False,,True,0.0,False,0.194,Small,True
-mean_hr,ILL,HEALTHY,78.576,75.921,29.166,10.319,59.533,74.633,47.836,15.867,0.0,0.0,False,False,,True,0.0,False,0.17,Small,True
-std_hr,ILL,HEALTHY,7.163,2.022,9.682,2.976,1.636,1.325,11.528,1.343,0.0,0.0,False,False,,True,0.0,False,-0.194,Small,True
-min_hr,ILL,HEALTHY,67.462,72.817,24.569,10.707,56.391,71.599,28.58,14.783,0.0,0.0,False,False,,True,0.0,False,0.398,Medium,True
-max_hr,ILL,HEALTHY,90.923,79.328,39.253,12.59,72.993,77.72,59.272,16.362,0.0,0.0,False,False,,True,0.191,True,0.036,Small,False
-age,ILL,HEALTHY,61.757,53.435,16.485,16.487,63.0,54.0,22.0,21.0,0.0,0.0,False,False,,True,0.0,False,-0.293,Medium,True

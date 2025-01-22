@@ -1,7 +1,0 @@
-feature,group_1,group_2,group_1_mean,group_2_mean,group_1_std,group_2_std,group_1_median,group_2_median,group_1_iqr,group_2_iqr,t_test_p_val,mann_whitney_p_val,effect_size,int_cohen_d,statistically_sig_different
-median_hr,Female,Male,80.979,75.115,27.847,26.822,72.551,60.181,45.049,38.623,,0.0,-0.152,Small,True
-mean_hr,Female,Male,81.427,75.589,27.172,26.19,73.408,63.417,44.993,38.549,,0.0,-0.152,Small,True
-std_hr,Female,Male,6.26,6.207,9.225,8.952,1.645,1.489,6.749,8.542,,0.023,-0.048,Small,True
-min_hr,Female,Male,71.551,66.091,23.523,21.927,63.425,56.926,31.562,23.888,,0.0,-0.162,Small,True
-max_hr,Female,Male,92.17,86.298,36.384,35.845,82.192,70.922,53.611,51.462,,0.0,-0.13,Small,True
-age,Female,Male,58.669,61.433,17.387,16.235,60.0,63.0,22.0,21.0,,0.0,0.096,Small,True

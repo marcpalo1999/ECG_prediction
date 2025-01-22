@@ -1,7 +1,0 @@
-feature,group_1,group_2,group_1_mean,group_2_mean,group_1_std,group_2_std,group_1_median,group_2_median,group_1_iqr,group_2_iqr,shapiro_p_val_group_1,shapiro_p_val_group_2,group_1_is_normal,group_2_is_normal,t_test_p_val,sample_means_are_same,mann_whitney_p_val,sample_distributions_are_same,effect_size,int_cohen_d,statistically_sig_different
-median_hr,Male,Female,75.115,80.979,26.822,27.847,60.181,72.551,38.623,45.049,0.0,0.0,False,False,,True,0.0,False,0.152,Small,True
-mean_hr,Male,Female,75.589,81.427,26.19,27.172,63.417,73.408,38.549,44.993,0.0,0.0,False,False,,True,0.0,False,0.152,Small,True
-std_hr,Male,Female,6.207,6.26,8.952,9.225,1.489,1.645,8.542,6.749,0.0,0.0,False,False,,True,0.023,False,0.048,Small,True
-min_hr,Male,Female,66.091,71.551,21.927,23.523,56.926,63.425,23.888,31.562,0.0,0.0,False,False,,True,0.0,False,0.162,Small,True
-max_hr,Male,Female,86.298,92.17,35.845,36.384,70.922,82.192,51.462,53.611,0.0,0.0,False,False,,True,0.0,False,0.13,Small,True
-age,Male,Female,61.433,58.669,16.235,17.387,63.0,60.0,21.0,22.0,0.0,0.0,False,False,,True,0.0,False,-0.096,Small,True
