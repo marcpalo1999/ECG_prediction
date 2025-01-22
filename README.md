@@ -2,6 +2,10 @@
 
 Multi-class ECG disease classification using Random Forest and CNN approaches.
 
+## Data Origin:
+
+https://physionet.org/content/ecg-arrhythmia/1.0.0/
+
 ## Project Structure
 
 - `data_processing.py`: ECG signal preprocessing
