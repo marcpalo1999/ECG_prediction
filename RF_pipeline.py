@@ -288,12 +288,6 @@ class ModelVisualizer:
         plt.tight_layout()
         plt.show()
 
-        # Optional: Print detailed metrics
-        print("\nCross-Validation Metrics Summary:")
-        for metric in metrics:
-            print(f"{metric.replace('test_', '').capitalize()}:")
-            print(f"  Mean: {np.mean(scores[metric]):.4f}")
-            print(f"  Std:  {np.std(scores[metric]):.4f}")
 
         def plot_oob_analysis(self, results):
             plt.figure(figsize=self.figsize)
