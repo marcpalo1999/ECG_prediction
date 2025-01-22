@@ -18,7 +18,7 @@ import os
 from multiprocessing import Pool, cpu_count
 from functools import partial
 
-from RF_pipeline import timing_decorator
+from src.RF_pipeline import timing_decorator
 
 
 n_workers = max(1, multiprocessing.cpu_count() - 1)

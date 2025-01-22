@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, Model, optimizers, callbacks
-from RF_pipeline import ModelVisualizer
+from src.RF_pipeline import ModelVisualizer
 import os
 from sklearn.metrics import precision_score, recall_score, f1_score
 
