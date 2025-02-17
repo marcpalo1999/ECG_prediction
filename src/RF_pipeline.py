@@ -18,7 +18,6 @@ from datetime import datetime
 import multiprocessing
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import roc_curve, auc
-from umap import UMAP
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 import joblib
@@ -52,7 +51,7 @@ class RandomForestAnalyzer:
         
         # Use original y values for mapping
         unique_labels = np.unique(y)
-        encoding_dict = {i: label for i, label in enumerate(unique_labels)}
+        encoding_dict = {label: i for i, label in enumerate(unique_labels)}
         
         # Encode y
         y_processed = pd.Categorical(y).codes
@@ -313,16 +312,25 @@ class ModelVisualizer:
             plt.grid(True, alpha=0.3)
             plt.show()
 
-    def plot_multiclass_confusion_matrix(self,y_true, y_pred, class_names):
+    def plot_multiclass_confusion_matrix(self,y_true, y_pred, class_names, normalise = None):
 
         # Compute confusion matrix
         cm = confusion_matrix(y_true, y_pred)
+        fmt = 'd'
+        if normalise == 0:  # normalize columns
+            cm = cm / cm.sum(axis=0, keepdims=True)
+            fmt = '.2f'
+
+        elif normalise == 1:  # normalize rows  
+            cm = cm / cm.sum(axis=1, keepdims=True)
+            fmt = '.2f'
+        
         
         # Create figure
         plt.figure(figsize=(10, 8))
         
         # Plot heatmap
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
+        sns.heatmap(cm, annot=True, fmt=fmt, cmap='Blues', 
                     xticklabels=class_names, 
                     yticklabels=class_names)
         

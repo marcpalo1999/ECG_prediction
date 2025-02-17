@@ -86,23 +86,23 @@ class ECGClassifier:
             y_val = tf.keras.utils.to_categorical(y_val, num_classes=self.n_classes)
             
             callbacks_list = [
-                callbacks.EarlyStopping(
-                    monitor='val_loss',
-                    patience=patience,
-                    restore_best_weights=True,
-                    mode='min'
-                ),
+                # callbacks.EarlyStopping(
+                #     monitor='val_loss',
+                #     patience=patience,
+                #     restore_best_weights=True,
+                #     mode='min'
+                # ),
                 callbacks.ModelCheckpoint(
                     filepath='./Results/final_CNN_model/best_model.keras',
                     monitor='val_loss',
                     save_best_only=True
                 ),
-                callbacks.ReduceLROnPlateau(
-                    monitor='val_loss',
-                    factor=0.1,
-                    patience=5,
-                    min_lr=1e-6
-                )
+                # callbacks.ReduceLROnPlateau(
+                #     monitor='val_loss',
+                #     factor=0.1,
+                #     patience=5,
+                #     min_lr=1e-6
+                # )
             ]
             
             # Data generator for memory efficiency
@@ -112,14 +112,14 @@ class ECGClassifier:
             val_dataset = tf.data.Dataset.from_tensor_slices((X_val, y_val))\
                 .batch(batch_size)
             
-            history = self.model.fit(
+            model = self.model.fit(
                 train_dataset,
                 validation_data=val_dataset,
                 epochs=epochs,
                 callbacks=callbacks_list,
                 verbose=1
             )
-            return history
+            return model
             
         except Exception as e:
             raise RuntimeError(f"Error during training: {str(e)}")
@@ -169,13 +169,14 @@ class ECGClassifier:
             visualizer.plot_multiclass_confusion_matrix(
                 y_test_classes, 
                 y_pred_classes,
-                class_names=list(self.encode_dict.values())
+                class_names=list(self.encode_dict.keys()),
+                # normalise=0
             )
             
             roc_auc = visualizer.plot_multiclass_roc(
                 y_test_classes,
                 y_pred, 
-                classes=list(self.encode_dict.values())
+                classes=list(self.encode_dict.keys())
             )
             
             # visualizer.plot_cv_results({

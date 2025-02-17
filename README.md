@@ -2,6 +2,8 @@
 
 Multi-class ECG disease classification using Random Forest and CNN approaches.
 
+
+
 ## Data Origin:
 
 https://physionet.org/content/ecg-arrhythmia/1.0.0/
@@ -14,7 +16,16 @@ https://physionet.org/content/ecg-arrhythmia/1.0.0/
 - `main.ipynb`: Main training pipeline
 - `main_validation.ipynb`: Model validation on held-out data
 
+## Script workflow
+
+Download data from source -> `data_processing.py` -> `main.ipynb` -> `main_validation.ipynb`
+
 ## Methodology
+
+### Data Split
+- 70/30 development/validation split
+- Stratified by condition
+- Post-split categorization into four disease classes
 
 ### Data Processing
 - 12-lead ECG signal filtering (5-140Hz bandpass, 50Hz notch)
@@ -33,12 +44,12 @@ https://physionet.org/content/ecg-arrhythmia/1.0.0/
 - BatchNorm, LeakyReLU, MaxPool
 - Dense layers with dropout
 
-## Data Split
-- 70/30 development/validation split
-- Initial stratification by binary Normal/Abnormal classes
-- Post-split categorization into four disease classes
+### Performance assessment
+- ROC curve by condition
+- Confusion matrix by condition
+- Accuracy, precision, recall & f1-score
 
 ## Requirements
 - Python 3.8+
-- Main libraries: tensorflow, scikit-learn, neurokit2
-- Full dependencies in `requirements.txt`
+- Main libraries: keras, scikit-learn, neurokit2
+- Full dependencies in `full_requirements.txt`

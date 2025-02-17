@@ -17,8 +17,14 @@ from concurrent.futures import ProcessPoolExecutor
 import os
 from multiprocessing import Pool, cpu_count
 from functools import partial
+import wfdb
+import h5py
+from tqdm import tqdm
 
-from src.RF_pipeline import timing_decorator
+
+import sys
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from RF_pipeline import timing_decorator
 
 
 n_workers = max(1, multiprocessing.cpu_count() - 1)
@@ -102,49 +108,52 @@ class ECGProcessor:
         plt.close()
     
     def process_data(self, max_files=None):
-        """Process all ECG files in dataset directory."""
+        """Process ECG files and save directly to HDF5."""
         processed_count = 0
-        ecg_data = {}
         patient_data = {}
         
-        for dir1 in sorted(d for d in self.dataset_dir.iterdir() if d.is_dir()):
-            for dir2 in sorted(d for d in dir1.iterdir() if d.is_dir()):
-                for record_path in dir2.glob('*.hea'):
-                    if max_files and processed_count >= max_files:
-                        break
-                        
-                    try:
-                        patient_id = record_path.stem
-                        print(f"Processing {patient_id}...")
-                        
-                        # Read header
-                        record = wfdb.rdheader(str(record_path.with_suffix('')))
-                        metadata = self._extract_metadata(record)
-                        
-                        # Read and process ECG signals
-                        mat_data = sio.loadmat(str(record_path.with_suffix('.mat')))
-                        signals = pd.DataFrame(mat_data['val'].T, columns=self.leads)
-                        filtered_signals = signals.apply(self._apply_filters)
-                        
-                        # Plot quality check
-                        if processed_count % 10 == 0:  # Plot every 10th patient
-                            self.plot_signal_quality(signals, filtered_signals, patient_id)
-                        
-                        # Store processed data
-                        ecg_data[patient_id] = {
-                            'ecg_signals': signals,
-                            'ecg_signals_filtered': filtered_signals
-                        }
-                        patient_data[patient_id] = metadata
-                        
-                        processed_count += 1
-                        
-                    except Exception as e:
-                        print(f"Error processing {patient_id}: {str(e)}")
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        save_dir = self.processed_dir / f"processed_{timestamp}"
+        save_dir.mkdir(parents=True, exist_ok=True)
         
-        # Save processed data
-        self._save_processed_data(ecg_data, pd.DataFrame.from_dict(patient_data, orient='index'))
-        return ecg_data, patient_data
+        with h5py.File(save_dir / 'ecg_signals.h5', 'w') as f:
+            filtered_group = f.create_group('filtered_signals')
+            
+            for dir1 in sorted(d for d in self.dataset_dir.iterdir() if d.is_dir()):
+                for dir2 in sorted(d for d in dir1.iterdir() if d.is_dir()):
+                    for record_path in dir2.glob('*.hea'):
+                        if max_files and processed_count >= max_files:
+                            break
+                            
+                        try:
+                            patient_id = record_path.stem
+                            print(f"Processing {patient_id}...")
+                            
+                            record = wfdb.rdheader(str(record_path.with_suffix('')))
+                            metadata = self._extract_metadata(record)
+                            
+                            mat_data = sio.loadmat(str(record_path.with_suffix('.mat')))
+                            signals = pd.DataFrame(mat_data['val'].T, columns=self.leads)
+                            filtered_signals = signals.apply(self._apply_filters)
+                            
+                            filtered_group.create_dataset(
+                                patient_id, 
+                                data=filtered_signals.values,
+                                compression="gzip",
+                                compression_opts=9
+                            )
+                            
+                            patient_data[patient_id] = metadata
+                            processed_count += 1
+                            
+                            if processed_count % 10 == 0:
+                                self.plot_signal_quality(signals, filtered_signals, patient_id)
+                                
+                        except Exception as e:
+                            print(f"Error processing {patient_id}: {str(e)}")
+        
+        pd.DataFrame.from_dict(patient_data, orient='index').to_csv(save_dir / 'patient_metadata.csv')
+        return save_dir
     
     def _extract_metadata(self, record):
         """Extract metadata from WFDB header."""
@@ -175,118 +184,65 @@ class ECGProcessor:
         except:
             return None
     
-    def _save_processed_data(self, ecg_data, patient_df):
-        """Save processed data to files."""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        save_dir = self.processed_dir / f"processed_{timestamp}"
-        save_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Save patient metadata
-        patient_df.to_csv(save_dir / 'patient_metadata.csv')
-        
-        # Save ECG signals
-        for patient_id, data in ecg_data.items():
-            patient_dir = save_dir / patient_id
-            patient_dir.mkdir(exist_ok=True)
-            
-            data['ecg_signals'].to_csv(patient_dir / 'raw_signals.csv')
-            data['ecg_signals_filtered'].to_csv(patient_dir / 'filtered_signals.csv')
-        
-        print(f"Processed data saved to: {save_dir}")
 
-from multiprocessing import Pool, cpu_count
-from pathlib import Path
-import pandas as pd
-from tqdm import tqdm
 
-def load_single_patient(patient_dir):
-    """
-    Load data for a single patient directory.
+# from multiprocessing import Pool, cpu_count
+# from pathlib import Path
+# import pandas as pd
+# from tqdm import tqdm
+
+# def load_single_patient(patient_dir):
+#     """
+#     Load data for a single patient directory.
     
-    Args:
-        patient_dir (Path): Directory containing patient data
+#     Args:
+#         patient_dir (Path): Directory containing patient data
         
-    Returns:
-        tuple: (patient_id, dict with filtered signals) or None if error
-    """
-    try:
-        patient_id = patient_dir.name
-        filtered_signals = pd.read_csv(patient_dir / 'filtered_signals.csv', index_col=0)
-        return patient_id, {
-            'ecg_signals_filtered': filtered_signals
-        }
-    except Exception as e:
-        print(f"Error loading {patient_id}: {str(e)}")
-        return None
+#     Returns:
+#         tuple: (patient_id, dict with filtered signals) or None if error
+#     """
+#     try:
+#         patient_id = patient_dir.name
+#         filtered_signals = pd.read_csv(patient_dir / 'filtered_signals.csv', index_col=0)
+#         return patient_id, {
+#             'ecg_signals_filtered': filtered_signals
+#         }
+#     except Exception as e:
+#         print(f"Error loading {patient_id}: {str(e)}")
+#         return None
 
 @timing_decorator
-def load_processed_data(base_dir, indices = None, n_jobs=None):
-    """
-    Load processed ECG data from the most recent processing run.
-    
-    Args:
-        base_dir (str): Base directory containing processed data
-        n_jobs (int, optional): Number of CPUs to use. If None, uses all available CPUs.
-        
-    Returns:
-        tuple: (ecg_data dict, patient_metadata DataFrame)
-    """
-    # Get number of CPUs to use
-    n_cpus = n_jobs if n_jobs is not None else cpu_count()-1
-    print(f"Using {n_cpus} CPUs for parallel processing")
-    
+def load_processed_data(base_dir, indices=None, n_jobs=None):
+    """Load processed ECG data."""
     data_dir = Path(base_dir)
-    
-    # Find most recent processed directory
     processed_dirs = sorted(list(data_dir.glob("processed*")), reverse=True)
-    if not processed_dirs:
-        raise FileNotFoundError(f"No processed data directories found in {base_dir}")
-    
     latest_dir = processed_dirs[0]
-    print(f"Loading data from: {latest_dir}")
     
-    # Load patient metadata
-    metadata_file = latest_dir / 'patient_metadata.csv'
-    if not metadata_file.exists():
-        raise FileNotFoundError(f"Metadata file not found in {latest_dir}")
-    
-    patient_df = pd.read_csv(metadata_file, index_col=0)
-
-    try:
+    patient_df = pd.read_csv(latest_dir / 'patient_metadata.csv', index_col=0)
+    if indices is not None:
         patient_df = patient_df[patient_df.index.isin(indices)]
-    except:
-        pass
     
-    # Get list of patient directories
-    if indices is None:
-        patient_dirs = [d for d in latest_dir.glob("*") if d.is_dir()]
-    else:
-        patient_dirs = [d for d in latest_dir.glob("*") if (d.is_dir()) and (d.name in indices) ]
-
-    total_patients = len(patient_dirs)
-    
-    # Parallel loading with progress bar
-    with Pool(processes=n_cpus) as pool:
-        results = list(tqdm(
-            pool.imap(load_single_patient, patient_dirs),
-            total=total_patients,
-            desc="Loading patient data",
-            unit="patient"
-        ))
-    
-    # Filter out None results and convert to dictionary
     ecg_data = {}
-    for result in results:
-        if result is not None:
-            patient_id, data = result
-            ecg_data[patient_id] = data
+    leads = ['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6']
     
-    print(f"Successfully loaded {len(ecg_data)} out of {total_patients} patients from {latest_dir}")
+    with h5py.File(latest_dir / 'ecg_signals.h5', 'r') as f:
+        patient_ids = patient_df.index if indices is not None else list(f['filtered_signals'].keys())
+        for patient_id in tqdm(patient_ids, desc="Loading patient data"):
+            try:
+                ecg_data[patient_id] = {
+                    'ecg_signals_filtered': pd.DataFrame(
+                        f['filtered_signals'][patient_id][()],
+                        columns=leads
+                    )
+                }
+            except Exception as e:
+                print(f"Error loading {patient_id}: {str(e)}")
+    
     return ecg_data, patient_df
 
 def main():
     # Define paths
-    dataset_dir = '../a-large-scale-12-lead-electrocardiogram-database-for-arrhythmia-study-1.0.0/WFDBRecords'
+    dataset_dir = '/Users/marcpalomer/Documents/Personal/ECG_prediction/a-large-scale-12-lead-electrocardiogram-database-for-arrhythmia-study-1.0.0/WFDBRecords'
     output_dir = './Results'
     
     # Initialize processor
@@ -294,7 +250,7 @@ def main():
     
     # Process data
     print("Processing ECG data...")
-    ecg_data, patient_data = processor.process_data()
+    save_dir = processor.process_data()
     
     print("Processing complete!")
 
