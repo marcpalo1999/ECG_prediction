@@ -1,3 +1,8 @@
-/Users/marcpalomercadenas/Desktop/ML/ECG_prediction
-ECG_PREDICTION/generated_reports
 /utils
+a-large-scale-12-lead-electrocardiogram-database-for-arrhythmia-study-1.0.0
+__pycache__
+src/__pycache__
+*.DS_Store
+
+Results/RF_model/
+Results/processed_data/

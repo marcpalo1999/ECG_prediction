@@ -20,15 +20,26 @@ from functools import partial
 import wfdb
 import h5py
 from tqdm import tqdm
+from functools import wraps
+import time
+from datetime import datetime
+import multiprocessing
 
 
 import sys
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
-from RF_pipeline import timing_decorator
 
 
 n_workers = max(1, multiprocessing.cpu_count() - 1)
-
+def timing_decorator(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{datetime.now():%Y-%m-%d %H:%M:%S} - {func.__name__} took {(end-start)/60:.2f} minutes")
+        return result
+    return wrapper
 
 class ECGProcessor:
     """Class for ECG signal processing and data management."""
@@ -186,30 +197,6 @@ class ECGProcessor:
     
 
 
-# from multiprocessing import Pool, cpu_count
-# from pathlib import Path
-# import pandas as pd
-# from tqdm import tqdm
-
-# def load_single_patient(patient_dir):
-#     """
-#     Load data for a single patient directory.
-    
-#     Args:
-#         patient_dir (Path): Directory containing patient data
-        
-#     Returns:
-#         tuple: (patient_id, dict with filtered signals) or None if error
-#     """
-#     try:
-#         patient_id = patient_dir.name
-#         filtered_signals = pd.read_csv(patient_dir / 'filtered_signals.csv', index_col=0)
-#         return patient_id, {
-#             'ecg_signals_filtered': filtered_signals
-#         }
-#     except Exception as e:
-#         print(f"Error loading {patient_id}: {str(e)}")
-#         return None
 
 @timing_decorator
 def load_processed_data(base_dir, indices=None, n_jobs=None):
