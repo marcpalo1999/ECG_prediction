@@ -25,9 +25,17 @@ Hierarchical severity-based grouping:
 7. Ischemic Disorders (Severity 7)
 
 ### Feature Engineering
-- Heart rate metrics (median, mean, std, min, max), extracted through peak to peak (R-R) pan tomkins detection.
+- Heart rate metrics (median, mean, std, min, max), extracted through peak to peak (R-R) detection algorithm.
 - Patient demographics (age)
 - *Planned: ECG morphology features (PR intervals, QRS width, ST elevation)*
+
+### Data Visualization
+- Sample size distribution
+- Missing data visualization
+- Normalised KDE of Probability density functions of data by pathology group
+- Boxplots
+- Feature correlation analysis (Spearman)
+- Key observation: Data distribution strongly depends on detection algorithm
 
 ### Machine Learning Approach
 - Random Forest classifier with class balancing
@@ -42,14 +50,31 @@ Hierarchical severity-based grouping:
 - `auxiliary.py`: Cardiac condition mapping
 
 ## Model Performance
-- Overall accuracy: ~60%, ROC AUC: ~0.80
+**On Development**
+- Overall:
+  - sensitivity: ~41%
+  - specificity: ~91%
+  - ROC AUC: ~73%
+- Binary (Normal va pathological):
+  - Sensitivity: ~92%
+  - Specificity: ~92%
+  - ROC AUC: 98%
+
+**On Validation**
+- Overall:
+  - sensitivity: ~42%
+  - specificity: ~92%
+- Binary (Normal va pathological):
+  - Sensitivity: ~92%
+  - Specificity: ~92%
+  - ROC AUC: 98%
 - Age dependency: Best performance in 40-65 age group
 - Strengths:
-  - Excellent normal ECG detection (~92% sensitivity)
+  - Excellent normal ECG detection
   - Strong normal vs. abnormal discrimination
 
 ## Limitations
-- 12% of high-severity conditions misclassified as normal/benign
+- ~10% of high-severity conditions misclassified as normal/benign
 - Poor detection of Conduction System Disease and Ischemic Disorders
 - Current features insufficient for separating morphologically distinct conditions
 - Significant class imbalance affects model performance

@@ -101,117 +101,21 @@ class ECGFeatureExtractor(BaseEstimator, TransformerMixin):
         hr_df = pd.DataFrame(hr_metrics, index=patient_ids)
         return hr_df
 
-    def pan_tompkins_qrs_detector(self, ecg_signal, fs=500):
-        """
-        Pan-Tompkins QRS detection algorithm implementation.
-        
-        Parameters:
-        -----------
-        ecg_signal : array-like
-            ECG time series
-        fs : int
-            Sampling frequency
-            
-        Returns:
-        --------
-        r_peaks : array
-            Indices of detected R-peaks
-        """
-        import numpy as np
-        from scipy.signal import lfilter, butter, filtfilt
-        
-        # 1. Bandpass filtering (5-15 Hz)
-        lowcut = 5.0
-        highcut = 15.0
-        nyquist = 0.5 * fs
-        low = lowcut / nyquist
-        high = highcut / nyquist
-        b, a = butter(2, [low, high], btype="band")
-        filtered_ecg = filtfilt(b, a, ecg_signal)
-        
-        # 2. Derivative filter
-        derivative = np.diff(filtered_ecg)
-        derivative = np.append(derivative, derivative[-1])
-        
-        # 3. Squaring
-        squared = derivative ** 2
-        
-        # 4. Moving window integration
-        window_size = int(0.15 * fs)  # 150 ms window
-        window = np.ones(window_size) / window_size
-        integrated = np.convolve(squared, window, mode='same')
-        
-        # 5. Adaptive thresholding
-        # Initialize variables
-        r_peaks = []
-        threshold = 0.3 * np.max(integrated[:int(2 * fs)])  # Initial threshold from first 2 seconds
-        threshold_i = threshold
-        threshold_f = 0.5 * threshold
-        
-        # Refractory period (250 ms)
-        refractory = int(0.25 * fs)
-        last_peak = -refractory
-        
-        # Search for peaks
-        for i in range(len(integrated)):
-            if integrated[i] > threshold_i and (i - last_peak) > refractory:
-                # Find the maximum within a 100 ms window
-                window_start = max(0, i - int(0.05 * fs))
-                window_end = min(len(integrated), i + int(0.05 * fs))
-                peak_idx = window_start + np.argmax(integrated[window_start:window_end])
-                
-                # Check if it's a real peak
-                if integrated[peak_idx] > threshold_i:
-                    r_peaks.append(peak_idx)
-                    last_peak = peak_idx
-                    
-                    # Update thresholds
-                    peak_value = integrated[peak_idx]
-                    threshold_i = 0.7 * peak_value + 0.3 * threshold_i
-                    threshold_f = 0.5 * threshold_i
-                
-        # 6. Back to original signal to refine peak locations
-        r_peaks_refined = []
-        for peak in r_peaks:
-            # Search in original ECG within ±25 ms window
-            window_size = int(0.025 * fs)
-            window_start = max(0, peak - window_size)
-            window_end = min(len(ecg_signal), peak + window_size)
-            
-            # Find maximum in original signal
-            max_idx = window_start + np.argmax(ecg_signal[window_start:window_end])
-            r_peaks_refined.append(max_idx)
-        
-        # 7. Physiological validation
-        # Filter out physiologically impossible RR intervals
-        rr_intervals = np.diff(r_peaks_refined) / fs
-        valid_peaks = [r_peaks_refined[0]]
-        
-        for i in range(1, len(r_peaks_refined)):
-            rr = rr_intervals[i-1]
-            if 0.2 <= rr <= 2.0:  # Normal HR range: 30-300 BPM
-                valid_peaks.append(r_peaks_refined[i])
-        
-        return np.array(valid_peaks)
-    
     def _calculate_heartrate(self, record, fs):
-        """Calculate heart rate from ECG record using Pan-Tompkins algorithm"""
-        try:
-            # Use Pan-Tompkins instead of neurokit2
-            rpeaks = self.pan_tompkins_qrs_detector(record, fs)
-            
-            # Check if we have enough valid peaks to calculate intervals
-            if len(rpeaks) <= 1:
-                raise ValueError("Not enough valid R-peaks to calculate heart rate")
-                
-            # Calculate HR from RR intervals
-            rr_intervals = np.diff(rpeaks) / fs
-            hr = 60 / rr_intervals
-            
-            return np.median(hr), np.mean(hr), np.std(hr), np.min(hr), np.max(hr)
-        except Exception as e:
-            # Return NaN values when calculation fails
-            return np.nan, np.nan, np.nan, np.nan, np.nan
+        """Calculate heart rate from ECG record"""
+        # Find R-peaks using neurokit2
+        rpeaks = list(nk.ecg_findpeaks(record, sampling_rate=fs).values())[0]
+        
+        # Remove physiologically impossible R-peaks
+        rr_intervals = np.diff(rpeaks) / fs
+        valid_rr = (rr_intervals >= 0.2) & (rr_intervals <= 2.0)  
+        valid_peaks = rpeaks[1:][valid_rr]
+        
+        # Calculate HR from RR intervals
+        valid_rr_intervals = np.diff(valid_peaks) / fs
+        hr = 60 / valid_rr_intervals
+        
+        return np.median(hr), np.mean(hr), np.std(hr), np.min(hr), np.max(hr)
     
     def save(self, path):
         """Save the feature extractor"""

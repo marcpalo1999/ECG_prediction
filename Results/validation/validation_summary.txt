@@ -5,26 +5,26 @@ Validation set size: 13545 patients
 
 Performance Metrics:
 --------------------------
-Overall accuracy: 0.5160
+Overall accuracy: 0.5673
 
 Class-specific performance:
-  Normal: 0.8371 (n=1854)
-  Others: 0.1583 (n=120)
-  Benign Variants: 0.7294 (n=4668)
-  Atrial Abnormalities: 0.0165 (n=121)
-  Chamber Abnormalities: 0.0776 (n=1121)
-  Conduction System Disease: 0.0564 (n=337)
-  Primary Electrical Disorders: 0.5834 (n=2158)
-  Ischemic Disorders: 0.2040 (n=3166)
+  Normal: 0.9169 (n=1854)
+  Others: 0.3333 (n=120)
+  Benign Variants: 0.8003 (n=4668)
+  Atrial Abnormalities: 0.2645 (n=121)
+  Chamber Abnormalities: 0.0999 (n=1121)
+  Conduction System Disease: 0.0831 (n=337)
+  Primary Electrical Disorders: 0.7039 (n=2158)
+  Ischemic Disorders: 0.1633 (n=3166)
 
-Critical misclassifications: 1772 (13.1% of validation set)
+Critical misclassifications: 1631 (12.0% of validation set)
 
 ROC AUC Values:
-  Normal: 0.9490
-  Others: 0.7631
-  Benign Variants: 0.8415
-  Atrial Abnormalities: 0.6357
-  Chamber Abnormalities: 0.6287
-  Conduction System Disease: 0.6440
-  Primary Electrical Disorders: 0.8570
-  Ischemic Disorders: 0.6471
+  Normal: 0.9779
+  Others: 0.8671
+  Benign Variants: 0.8729
+  Atrial Abnormalities: 0.8430
+  Chamber Abnormalities: 0.6587
+  Conduction System Disease: 0.7209
+  Primary Electrical Disorders: 0.8973
+  Ischemic Disorders: 0.6715
