@@ -135,6 +135,7 @@ def histogram_labels(labels, pathology_order):
     plt.ylabel('Count')
     plt.xticks(rotation=45)
     plt.tight_layout()
+    plt.savefig('./Results/Images/histogram_distribution.png')
     plt.show()
     plt.close()
 
@@ -201,6 +202,8 @@ def assess_missing_values(df, features=None, target_col='diagnosis_label', hue =
     plt.xlabel('Features')
     plt.xticks(rotation=90)
     plt.tight_layout()
+
+    plt.savefig(f'./Results/Images/missing_values.png')
     plt.show()
     
     if hue==True:
@@ -233,12 +236,13 @@ def assess_missing_values(df, features=None, target_col='diagnosis_label', hue =
                                 f'{int(height)}', ha="center")
                     
                     plt.tight_layout()
+                    plt.savefig(f'./Results/Images/{feature}_{hue}_missing_values.png')
+
                     plt.show()
     
     return missing_summary
 
 
-import neurokit2 as nk
 import numpy as np
 
 def validate_rpeaks(rpeaks, fs):
@@ -326,4 +330,32 @@ def plot_grouped_boxplots(df, features, group_var, hue_var=None, order=None, fig
             plt.legend(title=hue_var, bbox_to_anchor=(1.05, 1), loc='upper left')
         
         plt.tight_layout()
+        plt.savefig(f'./Results/Images/{feature}_boxplot.png')
         plt.show()
+
+
+def gridCV_plot_param_performance(cv_results, param_name):
+    param_values = []
+    mean_scores = []
+    std_scores = []
+    
+    # Custom sorting to handle None values
+    unique_values = list(set(cv_results[f'param_{param_name}']))
+    # Sort None to the beginning
+    unique_values.sort(key=lambda x: (x is not None, x))
+    
+    for value in unique_values:
+        indices = [i for i, v in enumerate(cv_results[f'param_{param_name}']) if v == value]
+        param_values.append(str(value))
+        mean_scores.append(np.mean([cv_results['mean_test_clinical'][i] for i in indices]))
+        std_scores.append(np.mean([cv_results['std_test_clinical'][i] for i in indices]))
+    
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(param_values, mean_scores, yerr=std_scores, fmt='o-')
+    plt.title(f'Performance by {param_name}')
+    plt.xlabel(param_name)
+    plt.ylabel('Mean Clinical Score')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(f'./Results/Images/{param_name}_performance.png')
+    plt.show()

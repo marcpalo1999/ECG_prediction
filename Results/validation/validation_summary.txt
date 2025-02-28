@@ -1,0 +1,30 @@
+ECG Classification Model Validation
+===================================
+
+Validation set size: 13545 patients
+
+Performance Metrics:
+--------------------------
+Overall accuracy: 0.5160
+
+Class-specific performance:
+  Normal: 0.8371 (n=1854)
+  Others: 0.1583 (n=120)
+  Benign Variants: 0.7294 (n=4668)
+  Atrial Abnormalities: 0.0165 (n=121)
+  Chamber Abnormalities: 0.0776 (n=1121)
+  Conduction System Disease: 0.0564 (n=337)
+  Primary Electrical Disorders: 0.5834 (n=2158)
+  Ischemic Disorders: 0.2040 (n=3166)
+
+Critical misclassifications: 1772 (13.1% of validation set)
+
+ROC AUC Values:
+  Normal: 0.9490
+  Others: 0.7631
+  Benign Variants: 0.8415
+  Atrial Abnormalities: 0.6357
+  Chamber Abnormalities: 0.6287
+  Conduction System Disease: 0.6440
+  Primary Electrical Disorders: 0.8570
+  Ischemic Disorders: 0.6471

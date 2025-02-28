@@ -386,11 +386,17 @@ class ModelVisualizer:
         fmt = 'd'
         
         if normalise == 0:  # normalize columns
-            cm = cm / cm.sum(axis=0, keepdims=True)
-            fmt = '.2f'
+            col_sums = cm.sum(axis=0, keepdims=True)
+            # Handle zero division
+            col_sums = np.where(col_sums == 0, 1, col_sums)
+            cm = cm / col_sums
+            fmt = '.3f'  # More decimal places
         elif normalise == 1:  # normalize rows  
-            cm = cm / cm.sum(axis=1, keepdims=True)
-            fmt = '.2f'
+            row_sums = cm.sum(axis=1, keepdims=True)
+            # Handle zero division
+            row_sums = np.where(row_sums == 0, 1, row_sums)
+            cm = cm / row_sums
+            fmt = '.3f'  # More decimal places  
         
         # Create figure
         plt.figure(figsize=(10, 8))
@@ -621,29 +627,9 @@ class BoundaryVisualizer:
     
     @staticmethod
     def plot_decision_space(X, y, model, classes, binary=True):
-        """
-        Plot decision boundaries in PCA-reduced feature space
-        
-        Parameters:
-        -----------
-        X : DataFrame
-            Feature matrix
-        y : array-like
-            Target labels
-        model : scikit-learn model
-            Fitted model
-        classes : list
-            Names of classes
-        binary : bool
-            Whether to use binary coloring (Normal vs Abnormal)
-            
-        Returns:
-        --------
-        ndarray : PCA-reduced features
-        """
-        # Create color mapping
+        """Plot decision boundaries in PCA space with feature vectors and contribution heatmap"""
+        # Color mapping (existing code)
         if binary:
-            # Binary color mapping - just override the severity_colors dictionary
             severity_colors = {
                 0: '#4daf4a',  # Normal - Green
                 1: '#e41a1c',  # All pathologies - Red
@@ -655,7 +641,6 @@ class BoundaryVisualizer:
                 7: '#e41a1c'   
             }
         else:
-            # Original multiclass colors
             severity_colors = {
                 0: '#4daf4a',  # Normal - Green
                 1: '#80b1d3',  # Benign Variants - Light Blue
@@ -667,10 +652,17 @@ class BoundaryVisualizer:
                 7: '#e41a1c'   # Ischemic Disorders - Red
             }
         
+        # Get feature names
+        feature_names = X.columns if hasattr(X, 'columns') else [f'Feature {i}' for i in range(X.shape[1])]
+        
         # Reduce dimensions with PCA
         reducer = PCA(n_components=2)
         X_reduced = reducer.fit_transform(X)
         
+        # Create visualization with two subplots
+        fig, axes = plt.subplots(1, 2, figsize=(18, 8), gridspec_kw={'width_ratios': [2, 1]})
+        
+        # PLOT 1: Decision boundary with feature vectors
         # Create mesh grid for decision boundary
         x_min, x_max = X_reduced[:, 0].min() - 1, X_reduced[:, 0].max() + 1
         y_min, y_max = X_reduced[:, 1].min() - 1, X_reduced[:, 1].max() + 1
@@ -687,35 +679,61 @@ class BoundaryVisualizer:
         Z_proba = model.predict_proba(grid_original)
         Z = np.argmax(Z_proba, axis=1)
         
-        # Plot
-        plt.figure(figsize=(12, 10))
-        
-        # Plot decision boundaries with severity-based colors
-        plt.tricontourf(grid_reduced[:, 0], grid_reduced[:, 1], Z, 
+        # Plot decision boundaries
+        axes[0].tricontourf(grid_reduced[:, 0], grid_reduced[:, 1], Z, 
                     levels=len(np.unique(Z)), 
                     colors=[severity_colors[cls] for cls in np.unique(Z)], 
                     alpha=0.2)
         
-        # Ordered class plotting based on severity
-        for cls in sorted(np.unique(y)):  # Sort by severity
+        # Plot data points
+        for cls in sorted(np.unique(y)):
             mask = (y == cls)
-            plt.scatter(
+            axes[0].scatter(
                 X_reduced[mask, 0], 
                 X_reduced[mask, 1], 
                 color=severity_colors[cls],
                 edgecolor='black', 
-                s=5,
+                s=10,
                 label=f"{classes[cls]} (Severity: {cls})"
             )
-            
-        plt.legend(title='Cardiac Conditions by Severity', loc='best', markerscale=2)   
-        plt.title('Cardiac Condition Classification in PCA Space')
-        plt.xlabel('PCA Component 1')
-        plt.ylabel('PCA Component 2')
+        
+        # Add feature vectors as arrows
+        # Calculate scaling factor for visibility
+        scale_factor = min(x_max - x_min, y_max - y_min) * 0.15
+        
+        for i, (name, x, y) in enumerate(zip(feature_names, 
+                                            reducer.components_[0] * scale_factor, 
+                                            reducer.components_[1] * scale_factor)):
+            axes[0].arrow(0, 0, x, y, color='red', width=0.3, head_width=1, head_length=2)
+            axes[0].text(x*1.1, y*1.1, name, color='red', fontsize=12)
+        
+        axes[0].legend(title='Cardiac Conditions', loc='best', markerscale=2)
+        axes[0].set_title('Cardiac Condition Classification in PCA Space')
+        axes[0].set_xlabel('PCA Component 1')
+        axes[0].set_ylabel('PCA Component 2')
+        
+        # PLOT 2: Feature contributions heatmap
+        loadings = reducer.components_
+        
+        # Create heatmap of feature contributions
+        sns.heatmap(
+            loadings.T,
+            annot=True,
+            fmt=".2f",
+            cmap='coolwarm',
+            center=0,
+            xticklabels=['PC1', 'PC2'],
+            yticklabels=feature_names,
+            ax=axes[1]
+        )
+        axes[1].set_title('Feature Contributions to Principal Components')
+        axes[1].set_xlabel('Principal Components')
+        axes[1].set_ylabel('Features')
+        
+        plt.tight_layout()
         plt.show()
         
-        return X_reduced
-
+        return X_reduced, loadings
 
 # Combined pipeline class that incorporates both data processing and modeling
 class ECGClassificationPipeline:
