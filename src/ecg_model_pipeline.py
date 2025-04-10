@@ -18,6 +18,7 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 from functools import wraps
 import time
+import shap
 
 
 n_workers = max(1, multiprocessing.cpu_count() - 1)
@@ -46,6 +47,7 @@ class ECGModelTrainer:
         self.model = None
         self.preprocessing_params = {}
         self.label_mapping = {}
+
         
     def create_pipeline(self):
         """Create sklearn pipeline with preprocessing and model"""
@@ -140,7 +142,45 @@ class ECGModelTrainer:
         # Fit model
         self.model = self.create_pipeline()
         self.model.fit(X_preprocessed, y_preprocessed)
+
         return self
+    
+    def create_shap_explainer(self, X_background=None, max_background_samples=100):
+        """Create and return a SHAP TreeExplainer for the trained model
+        
+        Parameters:
+        -----------
+        X_background : DataFrame, optional
+            Background data for the explainer (should be preprocessed)
+        max_background_samples : int
+            Maximum number of samples to use as background
+            
+        Returns:
+        --------
+        explainer : shap.TreeExplainer
+            Trained SHAP explainer
+        """
+        import shap
+        
+        if self.model is None:
+            raise ValueError("Model must be trained before creating explainer")
+        
+        # Get the underlying classifier from the pipeline
+        classifier = self.model.named_steps['classifier']
+        
+        # Use provided background data or create empty explainer
+        if X_background is not None:
+            # Limit sample size if needed
+            if len(X_background) > max_background_samples:
+                X_background = X_background.iloc[:max_background_samples]
+            
+            # Create explainer with background data
+            self.explainer = shap.TreeExplainer(classifier, X_background)
+        else:
+            # Create explainer without background data
+            self.explainer = shap.TreeExplainer(classifier)
+        
+        return self.explainer
     
     def predict(self, X):
         """Predict class labels for samples in X"""
@@ -267,13 +307,14 @@ class ECGModelTrainer:
         }
     
     def save(self, path):
-        """Save model and preprocessing parameters"""
+        """Save model, preprocessing parameters, and SHAP explainer"""
         os.makedirs(os.path.dirname(path), exist_ok=True)
         
         model_data = {
             'model': self.model,
             'preprocessing_params': self.preprocessing_params,
             'label_mapping': self.label_mapping,
+            'explainer': getattr(self, 'explainer', None),  # Save explainer if exists
             'config': {
                 'n_estimators': self.n_estimators,
                 'random_state': self.random_state,
@@ -301,6 +342,10 @@ class ECGModelTrainer:
         instance.model = model_data['model']
         instance.preprocessing_params = model_data['preprocessing_params']
         instance.label_mapping = model_data['label_mapping']
+        
+        # Restore explainer if available
+        if 'explainer' in model_data and model_data['explainer'] is not None:
+            instance.explainer = model_data['explainer']
         
         return instance
 
@@ -799,6 +844,7 @@ class ECGClassificationPipeline:
         y = processed_data['cardiac_condition']
         
         self.model_trainer.fit(X, y)
+
         
         return processed_data
     
